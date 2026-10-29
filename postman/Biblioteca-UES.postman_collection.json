@@ -1,0 +1,739 @@
+{
+  "info": {
+    "name": "Biblioteca UES - API",
+    "description": "Colección de pruebas de la API del Sistema de Biblioteca UES (Spring Boot + MySQL).\n\nEjecutar con el Collection Runner en el orden de las carpetas: primero el flujo completo (crea, consulta, actualiza, presta, devuelve y elimina), luego los casos de error y por último las consultas de catálogo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "autorId", "value": "1" },
+    { "key": "libroId", "value": "1" },
+    { "key": "socioId", "value": "1" },
+    { "key": "prestamoId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Flujo completo CRUD (ejecutar en orden)",
+      "item": [
+        {
+          "name": "1.1 GET autores",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve un arreglo', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/autores" }
+        },
+        {
+          "name": "1.2 POST autor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve id y nombre', function () {",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.expect(body.nombre).to.eql('Julio Cortazar');",
+                  "});",
+                  "pm.collectionVariables.set('autorId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Julio Cortazar\",\n  \"nacionalidad\": \"Argentina\"\n}"
+            },
+            "url": "{{baseUrl}}/api/autores"
+          }
+        },
+        {
+          "name": "1.3 GET autor por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Es el autor creado', function () {",
+                  "  pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('autorId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/autores/{{autorId}}" }
+        },
+        {
+          "name": "1.4 PUT autor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Nacionalidad actualizada', function () {",
+                  "  pm.expect(pm.response.json().nacionalidad).to.eql('Argentino');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Julio Cortazar\",\n  \"nacionalidad\": \"Argentino\"\n}"
+            },
+            "url": "{{baseUrl}}/api/autores/{{autorId}}"
+          }
+        },
+        {
+          "name": "1.5 POST libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Nace disponible', function () { pm.expect(body.disponible).to.eql(true); });",
+                  "pm.test('Queda asociado al autor', function () {",
+                  "  pm.expect(body.autorId).to.eql(Number(pm.collectionVariables.get('autorId')));",
+                  "});",
+                  "pm.collectionVariables.set('libroId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Rayuela\",\n  \"isbn\": \"TST-{{$timestamp}}\",\n  \"anioPublicacion\": 1963,\n  \"editorial\": \"Sudamericana\",\n  \"autorId\": {{autorId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/libros"
+          }
+        },
+        {
+          "name": "1.6 GET libro por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Incluye el nombre del autor', function () {",
+                  "  pm.expect(pm.response.json().autorNombre).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros/{{libroId}}" }
+        },
+        {
+          "name": "1.7 PUT libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Editorial actualizada', function () {",
+                  "  pm.expect(pm.response.json().editorial).to.eql('Alfaguara');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Rayuela\",\n  \"isbn\": \"TST-{{$timestamp}}\",\n  \"anioPublicacion\": 1963,\n  \"editorial\": \"Alfaguara\",\n  \"autorId\": {{autorId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/libros/{{libroId}}"
+          }
+        },
+        {
+          "name": "1.8 POST socio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve numero de socio', function () { pm.expect(body.numeroSocio).to.be.a('string'); });",
+                  "pm.collectionVariables.set('socioId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Socio Demo\",\n  \"numeroSocio\": \"SOC-{{$timestamp}}\",\n  \"email\": \"socio{{$timestamp}}@ues.edu.sv\"\n}"
+            },
+            "url": "{{baseUrl}}/api/socios"
+          }
+        },
+        {
+          "name": "1.9 GET socio por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Es el socio creado', function () {",
+                  "  pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('socioId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/socios/{{socioId}}" }
+        },
+        {
+          "name": "1.10 PUT socio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Nombre actualizado', function () {",
+                  "  pm.expect(pm.response.json().nombre).to.eql('Socio Demo Actualizado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Socio Demo Actualizado\",\n  \"numeroSocio\": \"SOC-{{$timestamp}}\",\n  \"email\": \"socio{{$timestamp}}@ues.edu.sv\"\n}"
+            },
+            "url": "{{baseUrl}}/api/socios/{{socioId}}"
+          }
+        },
+        {
+          "name": "1.11 POST prestamo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Prestamo activo', function () {",
+                  "  pm.expect(body.devuelto).to.eql(false);",
+                  "  pm.expect(body.fechaDevolucion).to.eql(null);",
+                  "});",
+                  "pm.collectionVariables.set('prestamoId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libroId\": {{libroId}},\n  \"socioId\": {{socioId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/prestamos"
+          }
+        },
+        {
+          "name": "1.12 GET libro prestado (disponible=false)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('El libro queda no disponible', function () {",
+                  "  pm.expect(pm.response.json().disponible).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros/{{libroId}}" }
+        },
+        {
+          "name": "1.13 POST prestamo duplicado (debe fallar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Explica que el libro no esta disponible', function () {",
+                  "  pm.expect(pm.response.json().message).to.include('no esta disponible');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libroId\": {{libroId}},\n  \"socioId\": {{socioId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/prestamos"
+          }
+        },
+        {
+          "name": "1.14 PUT devolucion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Prestamo devuelto', function () {",
+                  "  pm.expect(body.devuelto).to.eql(true);",
+                  "  pm.expect(body.fechaDevolucion).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/prestamos/{{prestamoId}}/devolucion" }
+        },
+        {
+          "name": "1.15 GET libro devuelto (disponible=true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('El libro vuelve a estar disponible', function () {",
+                  "  pm.expect(pm.response.json().disponible).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros/{{libroId}}" }
+        },
+        {
+          "name": "1.16 GET prestamo por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estado devuelto', function () {",
+                  "  pm.expect(pm.response.json().devuelto).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/prestamos/{{prestamoId}}" }
+        },
+        {
+          "name": "1.17 DELETE prestamo devuelto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/prestamos/{{prestamoId}}" }
+        },
+        {
+          "name": "1.18 DELETE libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/libros/{{libroId}}" }
+        },
+        {
+          "name": "1.19 DELETE autor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/autores/{{autorId}}" }
+        },
+        {
+          "name": "1.20 DELETE socio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/socios/{{socioId}}" }
+        }
+      ]
+    },
+    {
+      "name": "2. Casos de error",
+      "item": [
+        {
+          "name": "2.1 GET autor inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Mensaje descriptivo', function () {",
+                  "  pm.expect(pm.response.json().message).to.include('No existe');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/autores/999999" }
+        },
+        {
+          "name": "2.2 GET ruta inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ruta-inexistente" }
+        },
+        {
+          "name": "2.3 PATCH no soportado (405)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('405 Method Not Allowed', function () { pm.response.to.have.status(405); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/autores/1" }
+        },
+        {
+          "name": "2.4 POST autor sin datos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Detalla los campos invalidos', function () {",
+                  "  const detalles = pm.response.json().detalles;",
+                  "  pm.expect(detalles).to.have.property('nombre');",
+                  "  pm.expect(detalles).to.have.property('nacionalidad');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"\",\n  \"nacionalidad\": \"\"\n}" },
+            "url": "{{baseUrl}}/api/autores"
+          }
+        },
+        {
+          "name": "2.5 POST libro con anio invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Senala anioPublicacion', function () {",
+                  "  pm.expect(pm.response.json().detalles).to.have.property('anioPublicacion');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Libro invalido\",\n  \"isbn\": \"TST-INVALIDO\",\n  \"anioPublicacion\": 50,\n  \"editorial\": \"X\",\n  \"autorId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/libros"
+          }
+        },
+        {
+          "name": "2.6 POST libro con ISBN duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Indica el ISBN duplicado', function () {",
+                  "  pm.expect(pm.response.json().message).to.include('ISBN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Copia\",\n  \"isbn\": \"978-0307474728\",\n  \"anioPublicacion\": 2000,\n  \"editorial\": \"X\",\n  \"autorId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/libros"
+          }
+        },
+        {
+          "name": "2.7 POST prestamo con libro inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"libroId\": 999999,\n  \"socioId\": 1\n}" },
+            "url": "{{baseUrl}}/api/prestamos"
+          }
+        },
+        {
+          "name": "2.8 GET prestamos con estado invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/prestamos?estado=cualquiera" }
+        },
+        {
+          "name": "2.9 DELETE autor con libros (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('No permite borrar autores con libros', function () {",
+                  "  pm.expect(pm.response.json().message).to.include('libros registrados');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/autores/1" }
+        },
+        {
+          "name": "2.10 GET prestamo inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/prestamos/999999" }
+        }
+      ]
+    },
+    {
+      "name": "3. Consultas de catalogo",
+      "item": [
+        {
+          "name": "3.1 Libros disponibles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Todos disponibles', function () {",
+                  "  const libros = pm.response.json();",
+                  "  pm.expect(libros.every(function (l) { return l.disponible === true; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros?disponible=true" }
+        },
+        {
+          "name": "3.2 Libros por autor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Filtra por autorId=1', function () {",
+                  "  const libros = pm.response.json();",
+                  "  pm.expect(libros.every(function (l) { return l.autorId === 1; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros?autorId=1" }
+        },
+        {
+          "name": "3.3 Buscar libro por titulo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Encuentra coincidencias de 1984', function () {",
+                  "  pm.expect(pm.response.json().length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/libros?titulo=1984" }
+        },
+        {
+          "name": "3.4 Prestamos activos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Solo prestamos activos', function () {",
+                  "  const prestamos = pm.response.json();",
+                  "  pm.expect(prestamos.every(function (p) { return p.devuelto === false; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/prestamos?estado=activo" }
+        },
+        {
+          "name": "3.5 Prestamos devueltos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Solo prestamos devueltos', function () {",
+                  "  const prestamos = pm.response.json();",
+                  "  pm.expect(prestamos.every(function (p) { return p.devuelto === true; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/prestamos?estado=devuelto" }
+        }
+      ]
+    }
+  ]
+}
